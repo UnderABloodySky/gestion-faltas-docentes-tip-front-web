@@ -1,4 +1,5 @@
 import './global.css';
+import { ThemeProvider } from "@/components/theme-provider"
 
 export const metadata = {
   title: 'Welcome to ciriaqui',
@@ -12,7 +13,11 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en">
-      <body>{children}</body>
+      <body>
+        <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
+          {children}
+        </ThemeProvider>
+      </body>
     </html>
   );
 }
