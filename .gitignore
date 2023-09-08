@@ -6,6 +6,8 @@ yarn-debug.log*
 yarn-error.log*
 lerna-debug.log*
 .pnpm-debug.log*
+testem.log*
+/libpeerconnection.log*
 
 # Diagnostic reports (https://nodejs.org/api/report.html)
 report.[0-9]*.[0-9]*.[0-9]*.[0-9]*.json
@@ -21,6 +23,7 @@ lib-cov
 
 # Coverage directory used by tools like istanbul
 coverage
+/coverage
 *.lcov
 
 # nyc test coverage
@@ -91,6 +94,10 @@ out
 .nuxt
 dist
 
+# compiled output
+tmp
+/out-tsc
+
 # Gatsby files
 .cache/
 # Comment in the public line in if your project uses Gatsby and not Next.js
@@ -128,3 +135,15 @@ dist
 .yarn/build-state.yml
 .yarn/install-state.gz
 .pnp.*
+
+# IDE - VSCode
+.vscode
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+
+# misc
+/.sass-cache
+/connect.lock
+/typings
