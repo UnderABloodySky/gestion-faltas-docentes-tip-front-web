@@ -1,10 +1,10 @@
 import { render } from '@testing-library/react';
 
-import AbsenceForm from './page';
+import NavBar from './nav-bar';
 
-describe('AbsenceForm', () => {
+describe('NavBar', () => {
   it('should render successfully', () => {
-    const { baseElement } = render(<AbsenceForm />);
+    const { baseElement } = render(<NavBar />);
     expect(baseElement).toBeTruthy();
   });
 });

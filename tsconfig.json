@@ -30,8 +30,7 @@
     ],
     "types": ["jest", "node"],
     "paths": {
-      "@/components/*": ["components/*"],
-      "@/lib/utils": ["lib/utils"]
+      "@/*": ["./*"]
     }
   },
   "include": [

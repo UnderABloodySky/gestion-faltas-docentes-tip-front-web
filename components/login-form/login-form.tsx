@@ -1,6 +1,8 @@
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
+import { useRouter } from 'next/navigation';
+import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
 import { Button } from '@/components/ui/button';
@@ -13,7 +15,6 @@ import {
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { useForm } from 'react-hook-form';
 
 const formSchema = z.object({
   email: z
@@ -36,16 +37,39 @@ export function LoginForm() {
     },
   });
 
-  async function onSubmit(values: z.infer<typeof formSchema>) {
+  const router = useRouter();
+
+  const handleLoginSuccess = () => {
+    // Redirect to login success route
+    router.push('/absence');
+  };
+
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
     console.log(values);
-    await fetch('http://localhost:8080/ciriaqui/api/teachers/login', {
+    const stringifiedBody = JSON.stringify(values);
+    console.log('stringified body: ', stringifiedBody);
+
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+    headers.append('Accept', 'application/json');
+
+    const res = await fetch('http://localhost:8080/teachers/login', {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application-json',
-      },
-      body: JSON.stringify(values),
+      headers: headers,
+      body: stringifiedBody,
     });
-  }
+
+    console.log('res: ', res);
+    if (res.status === 400) {
+      console.log('fallo el login');
+    } else if (res.status === 200) {
+      console.log('login exitoso');
+      handleLoginSuccess();
+    } else {
+      console.log('error desconocido');
+    }
+    console.log('JSON res: ', await res.json());
+  };
 
   return (
     <Form {...form}>

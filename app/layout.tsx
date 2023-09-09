@@ -1,5 +1,7 @@
 import './global.css';
 import { ThemeProvider } from "@/components/theme-provider"
+import { Toaster } from "@/components/ui/toaster"
+import NavBar from '@/components/nav-bar/nav-bar';
 
 export const metadata = {
   title: 'Welcome to ciriaqui',
@@ -12,10 +14,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en">
+    <html lang="es">
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          {children}
+          <NavBar />
+          <div className='container mt-14'>
+            <main>{children}</main>
+          </div>
+          <Toaster />
         </ThemeProvider>
       </body>
     </html>
