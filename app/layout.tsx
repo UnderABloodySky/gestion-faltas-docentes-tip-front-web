@@ -2,6 +2,7 @@ import './global.css';
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/toaster"
 import NavBar from '@/components/nav-bar/nav-bar';
+import { AuthProvider } from '@/components/auth/auth-context';
 
 export const metadata = {
   title: 'Welcome to ciriaqui',
@@ -17,11 +18,13 @@ export default function RootLayout({
     <html lang="es">
       <body>
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem>
-          <NavBar />
-          <div className='container mt-14'>
-            <main>{children}</main>
-          </div>
-          <Toaster />
+          <AuthProvider>
+            <NavBar />
+            <div className='container mt-14'>
+              <main>{children}</main>
+            </div>
+            <Toaster />
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

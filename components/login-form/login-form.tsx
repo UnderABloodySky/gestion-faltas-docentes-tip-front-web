@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
+import { useAuth, User } from '@/components/auth/auth-context';
+
 import { Button } from '@/components/ui/button';
 import {
   Form,
@@ -37,9 +39,11 @@ export function LoginForm() {
     },
   });
 
+  const { login } = useAuth();
   const router = useRouter();
 
-  const handleLoginSuccess = () => {
+  const handleLoginSuccess = (userData: User) => {
+    login(userData);
     // Redirect to login success route
     router.push('/absence');
   };
@@ -53,7 +57,7 @@ export function LoginForm() {
     headers.append('Content-Type', 'application/json');
     headers.append('Accept', 'application/json');
 
-    const res = await fetch('http://localhost:8080/teachers/login', {
+    const res = await fetch('http://localhost:8080/ciriaqui/api/teachers/login', {
       method: 'POST',
       headers: headers,
       body: stringifiedBody,
@@ -63,12 +67,18 @@ export function LoginForm() {
     if (res.status === 400) {
       console.log('fallo el login');
     } else if (res.status === 200) {
+      const userData = await res.json();
+      console.log('JSON userData: ', userData);
+      const parsedUser: User = {
+        id: userData.id,
+        name: userData.name,
+        email: userData.email,
+      };
       console.log('login exitoso');
-      handleLoginSuccess();
+      handleLoginSuccess(parsedUser);
     } else {
       console.log('error desconocido');
     }
-    console.log('JSON res: ', await res.json());
   };
 
   return (

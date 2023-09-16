@@ -4,6 +4,9 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
+import { DateRange } from 'react-day-picker';
+
+import { useAuth } from '@/components/auth/auth-context';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -14,14 +17,19 @@ import {
   FormMessage,
   FormDescription,
 } from '@/components/ui/form';
-import { DatePicker } from '@/components/ui/date-picker';
+import { DateRangePicker } from '@/components/ui/date-range-picker';
+import { ToastAction } from '@/components/ui/toast';
 import { useToast } from '@/components/ui/use-toast';
 import { Combobox } from '@/components/ui/combobox';
 
 const absenceFormSchema = z.object({
-  start_absence_date: z.date({
-    required_error: 'Debe seleccionar una fecha.',
-  }),
+  absence_date_range: z.object(
+    {
+      from: z.date(),
+      to: z.date().optional(),
+    },
+    { required_error: 'Debe seleccionar una fecha.' }
+  ),
   absence_type: z.string({
     required_error: 'Debe seleccionar un tipo de falta.',
   }),
@@ -29,23 +37,23 @@ const absenceFormSchema = z.object({
 
 type AbsenceFormValues = z.infer<typeof absenceFormSchema>;
 
-const defaultValues: Partial<AbsenceFormValues> = {
-  start_absence_date: new Date(),
-};
-
 export function AbsenceForm() {
   const { toast } = useToast();
+  const { user } = useAuth();
   const form = useForm<AbsenceFormValues>({
     resolver: zodResolver(absenceFormSchema),
-    defaultValues,
   });
 
   const onSubmit = async (data: AbsenceFormValues) => {
     console.log('data: ', data);
     const parsedData = {
       article: data.absence_type,
-      beginDate: format(data.start_absence_date, 'yyyy-MM-dd'),
-      idTeacher: 1,
+      beginDate: format(data.absence_date_range.from, 'yyyy-MM-dd'),
+      endDate: format(
+        data.absence_date_range.to || data.absence_date_range.from,
+        'yyyy-MM-dd'
+      ),
+      idTeacher: user?.id,
     };
     console.log('parsedData: ', parsedData);
     const stringifiedBody = JSON.stringify(parsedData);
@@ -55,23 +63,35 @@ export function AbsenceForm() {
     headers.append('Content-Type', 'application/json');
     headers.append('Accept', 'application/json');
 
-    const res = await fetch('http://localhost:8080/lacks', {
+    const res = await fetch('http://localhost:8080/ciriaqui/api/lacks', {
       method: 'POST',
       headers: headers,
       body: stringifiedBody,
     });
     console.log('res: ', res);
-    console.log('JSON res: ', await res.json());
+    // console.log('JSON res: ', await res.json());
 
-    if (res.status === 404) {
+    if (res.status === 404 || res.status === 400) {
       toast({
+        variant: 'destructive',
         title: 'Algo salio mal.',
         description: 'Fallo la creacion de la falta.',
+        action: (
+          <ToastAction
+            altText="Reintentar"
+            onClick={() => {
+              onSubmit(data);
+            }}
+          >
+            Reintentar
+          </ToastAction>
+        ),
       });
     } else if (res.status === 200 || res.status === 201) {
+      const { id } = await res.json();
       toast({
         title: 'Creacion exitosa.',
-        description: 'Se creo la falta exitosamente.',
+        description: `Se creo la falta con id ${id} exitosamente.`,
       });
     }
   };
@@ -81,21 +101,23 @@ export function AbsenceForm() {
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
         <FormField
           control={form.control}
-          name="start_absence_date"
+          name="absence_date_range"
           render={({
             field,
           }: {
-            field: { value: Date; onChange: (date: Date | undefined) => void };
+            field: {
+              value: DateRange;
+              onChange: (date: DateRange | undefined) => void;
+            };
           }) => (
             <FormItem className="flex flex-col">
-              <FormLabel>Fecha inicial de la falta</FormLabel>
-              <DatePicker
-                isFormField
-                dateValue={field.value}
-                onChangeDate={field.onChange}
+              <FormLabel>Fechas de la falta</FormLabel>
+              <DateRangePicker
+                dateRangeValue={field.value}
+                onChangeRangeDate={field.onChange}
               />
               <FormDescription>
-                Fecha seleccionada como primer día de la falta.
+                Fechas seleccionadas para faltar.
               </FormDescription>
               <FormMessage />
             </FormItem>
@@ -114,8 +136,8 @@ export function AbsenceForm() {
                 }
               />
               <FormDescription>
-                A partir del tipo de falta se determinan la cantidad de dias a
-                tomar.
+                El tipo de falta determina la cantidad de dias minimos y
+                maximos.
               </FormDescription>
               <FormMessage />
             </FormItem>
