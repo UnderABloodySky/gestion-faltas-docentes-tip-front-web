@@ -19,7 +19,7 @@ import {
 } from '@/components/ui/popover';
 import { FormControl } from './form';
 
-const absence_types = [
+const absence_types: AbsenceType[] = [
   {
     value: 'EXAM',
     label: 'Examen',

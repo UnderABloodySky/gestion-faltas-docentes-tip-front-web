@@ -1,10 +1,12 @@
 'use client';
 
+import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 import { format } from 'date-fns';
 import { DateRange } from 'react-day-picker';
+import { PenSquare, Trash2 } from 'lucide-react';
 
 import { useAuth } from '@/components/auth/auth-context';
 
@@ -21,6 +23,7 @@ import { DateRangePicker } from '@/components/ui/date-range-picker';
 import { ToastAction } from '@/components/ui/toast';
 import { useToast } from '@/components/ui/use-toast';
 import { Combobox } from '@/components/ui/combobox';
+import { Absence } from 'app/absence/page';
 
 const absenceFormSchema = z.object({
   absence_date_range: z.object(
@@ -37,15 +40,35 @@ const absenceFormSchema = z.object({
 
 type AbsenceFormValues = z.infer<typeof absenceFormSchema>;
 
-export function AbsenceForm() {
+export interface AbsenceFormProps {
+  selectedAbsence?: Absence;
+  onUpdateAbsenceSuccess: () => void;
+}
+
+export function AbsenceForm({
+  selectedAbsence,
+  onUpdateAbsenceSuccess,
+}: AbsenceFormProps) {
   const { toast } = useToast();
   const { user } = useAuth();
   const form = useForm<AbsenceFormValues>({
     resolver: zodResolver(absenceFormSchema),
   });
 
+  useEffect(() => {
+    if (selectedAbsence) {
+      form.setValue('absence_type', selectedAbsence.article);
+      form.setValue('absence_date_range', {
+        from: selectedAbsence.beginDate,
+        to: selectedAbsence.endDate,
+      });
+    } else {
+      form.reset();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedAbsence]);
+
   const onSubmit = async (data: AbsenceFormValues) => {
-    console.log('data: ', data);
     const parsedData = {
       article: data.absence_type,
       beginDate: format(data.absence_date_range.from, 'yyyy-MM-dd'),
@@ -55,9 +78,7 @@ export function AbsenceForm() {
       ),
       idTeacher: user?.id,
     };
-    console.log('parsedData: ', parsedData);
     const stringifiedBody = JSON.stringify(parsedData);
-    console.log('stringified body: ', stringifiedBody);
 
     const headers = new Headers();
     headers.append('Content-Type', 'application/json');
@@ -68,8 +89,6 @@ export function AbsenceForm() {
       headers: headers,
       body: stringifiedBody,
     });
-    console.log('res: ', res);
-    // console.log('JSON res: ', await res.json());
 
     if (res.status === 404 || res.status === 400) {
       toast({
@@ -87,11 +106,111 @@ export function AbsenceForm() {
           </ToastAction>
         ),
       });
+    } else if (res.status === 409) {
+      toast({
+        variant: 'destructive',
+        title: 'Fecha invalida.',
+        description: 'Existe otra falta dentro del rango de la nueva falta.',
+        action: (
+          <ToastAction
+            altText="Reintentar"
+            onClick={() => {
+              onSubmit(data);
+            }}
+          >
+            Reintentar
+          </ToastAction>
+        ),
+      });
     } else if (res.status === 200 || res.status === 201) {
-      const { id } = await res.json();
+      onUpdateAbsenceSuccess();
       toast({
         title: 'Creacion exitosa.',
-        description: `Se creo la falta con id ${id} exitosamente.`,
+        description: `Se creo la falta exitosamente.`,
+      });
+    }
+  };
+
+  const onUpdate = async () => {
+    const data = form.getValues();
+    const parsedData = {
+      article: data.absence_type,
+      beginDate: format(data.absence_date_range.from, 'yyyy-MM-dd'),
+      endDate: format(
+        data.absence_date_range.to || data.absence_date_range.from,
+        'yyyy-MM-dd'
+      ),
+      idTeacher: user?.id,
+      id: selectedAbsence?.id,
+    };
+    const stringifiedBody = JSON.stringify(parsedData);
+
+    const headers = new Headers();
+    headers.append('Content-Type', 'application/json');
+    headers.append('Accept', 'application/json');
+
+    const res = await fetch('http://localhost:8080/ciriaqui/api/lacks', {
+      method: 'PUT',
+      headers: headers,
+      body: stringifiedBody,
+    });
+
+    if (res.status === 404 || res.status === 400 || res.status === 500) {
+      toast({
+        variant: 'destructive',
+        title: 'Algo salio mal.',
+        description: 'Fallo la actualizacion de la falta.',
+        action: (
+          <ToastAction altText="Reintentar" onClick={onUpdate}>
+            Reintentar
+          </ToastAction>
+        ),
+      });
+    } else if (res.status === 409) {
+      toast({
+        variant: 'destructive',
+        title: 'Fecha invalida.',
+        description:
+          'Existe otra falta dentro del rango de la falta actualizada.',
+        action: (
+          <ToastAction altText="Reintentar" onClick={onUpdate}>
+            Reintentar
+          </ToastAction>
+        ),
+      });
+    } else if (res.status === 200) {
+      onUpdateAbsenceSuccess();
+      toast({
+        title: 'Actualizacion exitosa.',
+        description: `Se actualizo la falta exitosamente.`,
+      });
+    }
+  };
+
+  const onDelete = async () => {
+    const res = await fetch(
+      `http://localhost:8080/ciriaqui/api/lacks/id/${selectedAbsence?.id}`,
+      {
+        method: 'DELETE',
+      }
+    );
+
+    if (res.status === 404 || res.status === 400 || res.status === 500) {
+      toast({
+        variant: 'destructive',
+        title: 'Algo salio mal.',
+        description: 'Fallo el borrado de la falta.',
+        action: (
+          <ToastAction altText="Reintentar" onClick={onDelete}>
+            Reintentar
+          </ToastAction>
+        ),
+      });
+    } else if (res.status === 200) {
+      onUpdateAbsenceSuccess();
+      toast({
+        title: 'Borrado exitoso.',
+        description: `Se borro la falta exitosamente.`,
       });
     }
   };
@@ -131,9 +250,7 @@ export function AbsenceForm() {
               <FormLabel>Tipo de falta</FormLabel>
               <Combobox
                 typeValue={field.value}
-                onChangeTypeValue={(newTypeValue) =>
-                  form.setValue('absence_type', newTypeValue)
-                }
+                onChangeTypeValue={field.onChange}
               />
               <FormDescription>
                 El tipo de falta determina la cantidad de dias minimos y
@@ -143,7 +260,18 @@ export function AbsenceForm() {
             </FormItem>
           )}
         />
-        <Button type="submit">Crear falta</Button>
+        {selectedAbsence ? (
+          <div className="flex flex-row gap-5">
+            <Button type="button" onClick={onUpdate}>
+              <PenSquare className="mr-2 h-4 w-4 shrink-0" /> Actualizar falta
+            </Button>
+            <Button type="button" onClick={onDelete}>
+              <Trash2 className="mr-2 h-4 w-4 shrink-0" /> Borrar falta
+            </Button>
+          </div>
+        ) : (
+          <Button type="submit">Crear falta</Button>
+        )}
       </form>
     </Form>
   );
