@@ -9,6 +9,11 @@
   },
   "private": true,
   "dependencies": {
+    "@fullcalendar/core": "^6.1.9",
+    "@fullcalendar/daygrid": "^6.1.9",
+    "@fullcalendar/interaction": "^6.1.9",
+    "@fullcalendar/react": "^6.1.9",
+    "@fullcalendar/timegrid": "^6.1.9",
     "@hookform/resolvers": "^3.3.1",
     "@nx/next": "16.7.4",
     "@radix-ui/react-avatar": "^1.0.3",
