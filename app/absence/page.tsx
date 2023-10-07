@@ -17,7 +17,7 @@ export interface Absence {
   endDate: Date;
 }
 
-type AbsenseResponse = Omit<Absence, 'beginDate' | 'endDate'> & {
+export type AbsenseResponse = Omit<Absence, 'beginDate' | 'endDate'> & {
   beginDate: string; // Override beginDate as string
   endDate: string; // Override endDate as string
   teacher?: any; // TODO: remove once the backend doesn't send this anymore
@@ -31,9 +31,12 @@ export function Absence(props: AbsenceProps) {
   // Define an async function to fetch the list of absences
   const fetchAbsences = useCallback(
     async (onSuccessfulFetch?: (updatedAbsences: Absence[]) => void) => {
+      if (!user?.id) {
+        return;
+      }
       try {
         const response = await fetch(
-          'http://localhost:8080/ciriaqui/api/lacks/id-teacher/' + user?.id
+          process.env.NEXT_PUBLIC_LACKS_URL + '/id-teacher/' + user?.id
         );
 
         if (!response.ok) {

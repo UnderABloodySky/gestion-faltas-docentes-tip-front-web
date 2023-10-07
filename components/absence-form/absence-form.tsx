@@ -84,7 +84,7 @@ export function AbsenceForm({
     headers.append('Content-Type', 'application/json');
     headers.append('Accept', 'application/json');
 
-    const res = await fetch('http://localhost:8080/ciriaqui/api/lacks', {
+    const res = await fetch('' + process.env.NEXT_PUBLIC_LACKS_URL, {
       method: 'POST',
       headers: headers,
       body: stringifiedBody,
@@ -111,16 +111,6 @@ export function AbsenceForm({
         variant: 'destructive',
         title: 'Fecha invalida.',
         description: 'Existe otra falta dentro del rango de la nueva falta.',
-        action: (
-          <ToastAction
-            altText="Reintentar"
-            onClick={() => {
-              onSubmit(data);
-            }}
-          >
-            Reintentar
-          </ToastAction>
-        ),
       });
     } else if (res.status === 200 || res.status === 201) {
       onUpdateAbsenceSuccess();
@@ -149,7 +139,7 @@ export function AbsenceForm({
     headers.append('Content-Type', 'application/json');
     headers.append('Accept', 'application/json');
 
-    const res = await fetch('http://localhost:8080/ciriaqui/api/lacks', {
+    const res = await fetch('' + process.env.NEXT_PUBLIC_LACKS_URL, {
       method: 'PUT',
       headers: headers,
       body: stringifiedBody,
@@ -172,11 +162,6 @@ export function AbsenceForm({
         title: 'Fecha invalida.',
         description:
           'Existe otra falta dentro del rango de la falta actualizada.',
-        action: (
-          <ToastAction altText="Reintentar" onClick={onUpdate}>
-            Reintentar
-          </ToastAction>
-        ),
       });
     } else if (res.status === 200) {
       onUpdateAbsenceSuccess();
@@ -189,7 +174,7 @@ export function AbsenceForm({
 
   const onDelete = async () => {
     const res = await fetch(
-      `http://localhost:8080/ciriaqui/api/lacks/id/${selectedAbsence?.id}`,
+      `${process.env.NEXT_PUBLIC_LACKS_URL}/id/${selectedAbsence?.id}`,
       {
         method: 'DELETE',
       }

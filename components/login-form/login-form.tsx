@@ -57,7 +57,7 @@ export function LoginForm() {
     headers.append('Content-Type', 'application/json');
     headers.append('Accept', 'application/json');
 
-    const res = await fetch('http://localhost:8080/ciriaqui/api/teachers/login', {
+    const res = await fetch('' + process.env.NEXT_PUBLIC_LOGIN_URL, {
       method: 'POST',
       headers: headers,
       body: stringifiedBody,

@@ -1,7 +1,7 @@
 'use client';
 // import styles from './user-avatar.module.scss';
 
-import { usePathname, useRouter } from 'next/navigation';
+import { usePathname } from 'next/navigation';
 import { useAuth } from '@/components/auth/auth-context';
 // import { UserCircle2 } from 'lucide-react';
 
@@ -21,7 +21,6 @@ import {
   // DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
-import { useCallback, useEffect } from 'react';
 
 /* eslint-disable-next-line */
 export interface UserAvatarProps {}
@@ -35,26 +34,9 @@ function getInitialsCapitalized(fullName: string) {
 export function UserAvatar(props: UserAvatarProps) {
   const pathName = usePathname();
   const { user, logout } = useAuth();
-  const router = useRouter();
   const isLoginPage = pathName === '/';
 
-  const redirectToLogin = useCallback(() => {
-    router.push('/');
-  }, [router])
-
-  const handleLogout = useCallback(() => {
-    logout();
-  }, [logout])
-
-  useEffect(() => {
-    // handle redirect to login screen when the user is not loged in
-    // TODO: move this to useAuth or a specific component to handle generic stuff
-    if (!user && !isLoginPage) {
-      redirectToLogin();
-    }
-  }, [user, isLoginPage, redirectToLogin])
-
-  const userNameInitials = user?.name && getInitialsCapitalized(user.name)
+  const userNameInitials = user?.name && getInitialsCapitalized(user.name);
 
   return isLoginPage ? null : (
     <DropdownMenu>
@@ -85,7 +67,7 @@ export function UserAvatar(props: UserAvatarProps) {
           </DropdownMenuItem>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem onClick={handleLogout}>
+        <DropdownMenuItem onClick={logout}>
           Desloguear
           {/* <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut> */}
         </DropdownMenuItem>
