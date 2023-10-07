@@ -1,7 +1,7 @@
 'use client';
 
-import * as React from 'react';
-import { format } from 'date-fns';
+import { useCallback, useMemo } from 'react';
+import { format, isWithinInterval } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar as CalendarIcon } from 'lucide-react';
 import { DateRange } from 'react-day-picker';
@@ -14,25 +14,50 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from '@/components/ui/popover';
+import Absence from '@/app/absence/page';
 
 export type DateRangePickerProps = {
   dateRangeValue: DateRange;
   onChangeRangeDate: (newRangeDate: DateRange | undefined) => void;
+  existingAbsences: Absence[];
 };
 
 export function DateRangePicker({
   dateRangeValue,
   onChangeRangeDate,
+  existingAbsences,
 }: DateRangePickerProps) {
-  const today = new Date();
-  const disabledDays = [
-    {
-      before: today,
+  const today = useMemo(() => new Date(), []);
+
+  function isWeekend(date: Date) {
+    // Get the day of the week (0 for Sunday, 1 for Monday, ..., 6 for Saturday)
+    const dayOfWeek = date.getDay();
+
+    // Check if it's Sunday (0) or Saturday (6)
+    return dayOfWeek === 0 || dayOfWeek === 6;
+  }
+
+  const isDayDisabled = useCallback(
+    (day: Date) => {
+      return (
+        existingAbsences.some((absence) =>
+          isWithinInterval(day, {
+            start: absence.beginDate,
+            end: absence.endDate,
+          })
+        ) ||
+        day < today ||
+        isWeekend(day)
+      );
     },
-    {
-      dayOfWeek: [0, 6],
-    },
-  ];
+    [existingAbsences, today]
+  );
+
+  const handleSelectRangeDate = (newRangeDate: DateRange | undefined) => {
+    console.log('newRangeDate: ', newRangeDate);
+    // const shouldShowErrorConflictDays = isWithinInterval()
+    onChangeRangeDate(newRangeDate);
+  };
 
   return (
     <div className={'grid gap-2'}>
@@ -68,10 +93,9 @@ export function DateRangePicker({
             defaultMonth={today}
             fromMonth={today}
             selected={dateRangeValue}
-            onSelect={onChangeRangeDate}
+            onSelect={handleSelectRangeDate}
             numberOfMonths={2}
-            disabled={disabledDays}
-            showOutsideDays={false}
+            disabled={isDayDisabled}
           />
         </PopoverContent>
       </Popover>

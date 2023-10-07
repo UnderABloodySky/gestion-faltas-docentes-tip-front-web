@@ -43,11 +43,13 @@ type AbsenceFormValues = z.infer<typeof absenceFormSchema>;
 export interface AbsenceFormProps {
   selectedAbsence?: Absence;
   onUpdateAbsenceSuccess: () => void;
+  existingAbsences: Absence[];
 }
 
 export function AbsenceForm({
   selectedAbsence,
   onUpdateAbsenceSuccess,
+  existingAbsences,
 }: AbsenceFormProps) {
   const { toast } = useToast();
   const { user } = useAuth();
@@ -217,6 +219,7 @@ export function AbsenceForm({
             <FormItem className="flex flex-col">
               <FormLabel>Fechas de la falta</FormLabel>
               <DateRangePicker
+                existingAbsences={existingAbsences}
                 dateRangeValue={field.value}
                 onChangeRangeDate={field.onChange}
               />

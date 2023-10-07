@@ -96,6 +96,7 @@ export function Absence(props: AbsenceProps) {
   return (
     <div className="flex flex-col sm:flex-row py-2 justify-around">
       <AbsenceForm
+        existingAbsences={absences}
         selectedAbsence={selectedAbsence}
         onUpdateAbsenceSuccess={onUpdateAbsenceSuccess}
       />
