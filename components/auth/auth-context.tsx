@@ -2,11 +2,13 @@
 
 import {
   createContext,
+  useCallback,
   useContext,
   useState,
   useEffect,
   ReactNode,
 } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
 
 // Define a TypeScript interface for your user object
 export interface User {
@@ -32,6 +34,8 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
 export function AuthProvider({ children }: AuthProviderProps) {
   const [user, setUser] = useState<User | null>(null);
+  const pathName = usePathname();
+  const router = useRouter();
 
   useEffect(() => {
     // Implement any initial authentication checks here if needed
@@ -48,6 +52,21 @@ export function AuthProvider({ children }: AuthProviderProps) {
     // checkAuthentication();
   }, []);
 
+  const redirectToLogin = useCallback(() => {
+    // Only redirect to login if the user is not already there
+    // if (pathName !== '/') {
+    if (pathName === '/absence') {
+      router.push('/');
+    }
+  }, [pathName, router]);
+
+  useEffect(() => {
+    // Automatically redirect to login screen if the user is not logged in
+    if (!user) {
+      redirectToLogin();
+    }
+  }, [redirectToLogin, user]);
+
   // Simulate a login function (replace with your actual login logic)
   const login = (userData: User) => {
     // Set the user to the provided user data
@@ -55,10 +74,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   // Simulate a logout function
-  const logout = () => {
+  const logout = useCallback(() => {
     // Set the user to null to indicate logout
     setUser(null);
-  };
+    redirectToLogin();
+  }, [redirectToLogin]);
 
   return (
     <AuthContext.Provider value={{ user, login, logout }}>

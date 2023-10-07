@@ -10,10 +10,16 @@ import timeGridPlugin from '@fullcalendar/timegrid'
 import interactionPlugin from '@fullcalendar/interaction'
 // import { INITIAL_EVENTS, createEventId } from './event-utils'
 
-/* eslint-disable-next-line */
-export interface BigCalendarProps {}
+import Absence from 'app/absence/page';
 
-export function BigCalendar(props: BigCalendarProps) {
+/* eslint-disable-next-line */
+export interface BigCalendarProps {
+  absences: Absence[],
+}
+
+export function BigCalendar({
+  absences,
+}: BigCalendarProps) {
     const [weekendsVisible, setWeekendsVisible] = useState(true)
     const [currentEvents, setCurrentEvents] = useState([])
 
