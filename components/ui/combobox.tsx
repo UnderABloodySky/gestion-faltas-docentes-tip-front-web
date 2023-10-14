@@ -18,54 +18,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover';
 import { FormControl } from './form';
-
-const absence_types: AbsenceType[] = [
-  {
-    value: 'EXAM',
-    label: 'Examen',
-  },
-  {
-    value: 'MAJORFORCE',
-    label: 'Fuerza mayor',
-  },
-  {
-    value: 'PARTICULAR',
-    label: 'Particular',
-  },
-  {
-    value: 'MOVING',
-    label: 'Mudanza',
-  },
-  {
-    value: 'EXCEPTIONALPERMISSIONS',
-    label: 'Permiso excepcional',
-  },
-  {
-    value: 'TAKECAREFAMILY',
-    label: 'Cuidado de un familiar',
-  },
-  {
-    value: 'DISABLEDCHILD',
-    label: 'Hijo discapacitado',
-  },
-  {
-    value: 'MATERNITY',
-    label: 'Maternidad',
-  },
-  {
-    value: 'STUDYDAY',
-    label: 'Dia de estudio',
-  },
-  {
-    value: 'CONTEST',
-    label: 'Concurso',
-  },
-];
-
-export type AbsenceType = {
-  value: string;
-  label: string;
-};
+import { absence_types } from '@/components/absence-form/absence-form';
 
 export type ComboboxProps = {
   typeValue: string;

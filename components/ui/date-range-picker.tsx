@@ -53,12 +53,6 @@ export function DateRangePicker({
     [existingAbsences, today]
   );
 
-  const handleSelectRangeDate = (newRangeDate: DateRange | undefined) => {
-    console.log('newRangeDate: ', newRangeDate);
-    // const shouldShowErrorConflictDays = isWithinInterval()
-    onChangeRangeDate(newRangeDate);
-  };
-
   return (
     <div className={'grid gap-2'}>
       <Popover>
@@ -93,7 +87,7 @@ export function DateRangePicker({
             defaultMonth={today}
             fromMonth={today}
             selected={dateRangeValue}
-            onSelect={handleSelectRangeDate}
+            onSelect={onChangeRangeDate}
             numberOfMonths={2}
             disabled={isDayDisabled}
           />

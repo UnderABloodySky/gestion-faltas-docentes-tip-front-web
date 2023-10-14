@@ -2,9 +2,9 @@
 
 import { useEffect } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm } from 'react-hook-form';
+import { ResolverOptions, useForm } from 'react-hook-form';
 import * as z from 'zod';
-import { format } from 'date-fns';
+import { format, isWithinInterval } from 'date-fns';
 import { DateRange } from 'react-day-picker';
 import { PenSquare, Trash2 } from 'lucide-react';
 
@@ -24,6 +24,69 @@ import { ToastAction } from '@/components/ui/toast';
 import { useToast } from '@/components/ui/use-toast';
 import { Combobox } from '@/components/ui/combobox';
 import { Absence } from 'app/absence/page';
+
+export type AbsenceType = {
+  value: string;
+  label: string;
+};
+
+export const absence_types: AbsenceType[] = [
+  {
+    value: 'EXAM',
+    label: 'Examen',
+  },
+  {
+    value: 'MAJORFORCE',
+    label: 'Fuerza mayor',
+  },
+  {
+    value: 'PARTICULAR',
+    label: 'Particular',
+  },
+  {
+    value: 'MOVING',
+    label: 'Mudanza',
+  },
+  {
+    value: 'EXCEPTIONALPERMISSIONS',
+    label: 'Permiso excepcional',
+  },
+  {
+    value: 'TAKECAREFAMILY',
+    label: 'Cuidado de un familiar',
+  },
+  {
+    value: 'DISABLEDCHILD',
+    label: 'Hijo discapacitado',
+  },
+  {
+    value: 'MATERNITY',
+    label: 'Maternidad',
+  },
+  {
+    value: 'STUDYDAY',
+    label: 'Dia de estudio',
+  },
+  {
+    value: 'CONTEST',
+    label: 'Concurso',
+  },
+];
+
+const doDateRangesOverlap = (
+  range1Start: Date,
+  range1End: Date,
+  range2Start: Date,
+  range2End: Date
+) => {
+  const dateRange1 = { start: range1Start, end: range1End };
+  const dateRange2 = { start: range2Start, end: range2End };
+
+  return (
+    isWithinInterval(dateRange1.start, dateRange2) ||
+    isWithinInterval(dateRange2.start, dateRange1)
+  );
+};
 
 const absenceFormSchema = z.object({
   absence_date_range: z.object(
@@ -53,12 +116,33 @@ export function AbsenceForm({
 }: AbsenceFormProps) {
   const { toast } = useToast();
   const { user } = useAuth();
+
+  const customResolver = async (
+    data: AbsenceFormValues,
+    context: unknown,
+    options: ResolverOptions<AbsenceFormValues>
+  ) => {
+    let extraErrors = {};
+    if (data.absence_date_range?.from && data.absence_date_range?.to) {
+      handleSelectRangeDate(data.absence_date_range);
+      extraErrors = form.formState.errors;
+    }
+    const resolved = await zodResolver(absenceFormSchema)(
+      data,
+      context,
+      options
+    );
+    return { ...resolved, errors: { ...resolved.errors, ...extraErrors } };
+  };
+
   const form = useForm<AbsenceFormValues>({
-    resolver: zodResolver(absenceFormSchema),
+    mode: 'onBlur',
+    resolver: customResolver,
   });
 
   useEffect(() => {
     if (selectedAbsence) {
+      form.clearErrors();
       form.setValue('absence_type', selectedAbsence.article);
       form.setValue('absence_date_range', {
         from: selectedAbsence.beginDate,
@@ -202,6 +286,48 @@ export function AbsenceForm({
     }
   };
 
+  const handleSelectRangeDate = (
+    newRangeDate: DateRange | undefined,
+    updateFormField?: (newRange: DateRange | undefined) => void
+  ) => {
+    let shouldShowErrorConflictDays = false;
+    if (newRangeDate?.from && newRangeDate?.to) {
+      shouldShowErrorConflictDays = existingAbsences.some((absence) =>
+        doDateRangesOverlap(
+          newRangeDate.from as Date,
+          newRangeDate.to as Date,
+          absence.beginDate,
+          absence.endDate
+        )
+      );
+    }
+
+    if (shouldShowErrorConflictDays) {
+      form.setError('absence_date_range', {
+        type: 'custom',
+        message:
+          'Rango de fechas invalido - superposicion con faltas existentes.',
+      });
+    } else {
+      form.clearErrors('absence_date_range');
+    }
+
+    if (updateFormField) {
+      updateFormField(newRangeDate);
+    }
+  };
+
+  const handleSelectTypeValue = (
+    newTypeValue: string,
+    updateFormField: (newValue: string) => void
+  ) => {
+    form.clearErrors('absence_type');
+    updateFormField(newTypeValue);
+  };
+
+  const formHasErrors =
+    form.formState.errors && Object.keys(form.formState.errors).length > 0;
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
@@ -213,7 +339,7 @@ export function AbsenceForm({
           }: {
             field: {
               value: DateRange;
-              onChange: (date: DateRange | undefined) => void;
+              onChange: (newRange: DateRange | undefined) => void;
             };
           }) => (
             <FormItem className="flex flex-col">
@@ -221,7 +347,9 @@ export function AbsenceForm({
               <DateRangePicker
                 existingAbsences={existingAbsences}
                 dateRangeValue={field.value}
-                onChangeRangeDate={field.onChange}
+                onChangeRangeDate={(newRangeDate) =>
+                  handleSelectRangeDate(newRangeDate, field.onChange)
+                }
               />
               <FormDescription>
                 Fechas seleccionadas para faltar.
@@ -238,7 +366,9 @@ export function AbsenceForm({
               <FormLabel>Tipo de falta</FormLabel>
               <Combobox
                 typeValue={field.value}
-                onChangeTypeValue={field.onChange}
+                onChangeTypeValue={(newTypeValue) =>
+                  handleSelectTypeValue(newTypeValue, field.onChange)
+                }
               />
               <FormDescription>
                 El tipo de falta determina la cantidad de dias minimos y
@@ -250,7 +380,7 @@ export function AbsenceForm({
         />
         {selectedAbsence ? (
           <div className="flex flex-row gap-5">
-            <Button type="button" onClick={onUpdate}>
+            <Button type="button" onClick={onUpdate} disabled={!!formHasErrors}>
               <PenSquare className="mr-2 h-4 w-4 shrink-0" /> Actualizar falta
             </Button>
             <Button type="button" onClick={onDelete}>
@@ -258,7 +388,9 @@ export function AbsenceForm({
             </Button>
           </div>
         ) : (
-          <Button type="submit">Crear falta</Button>
+          <Button type="submit" disabled={!!formHasErrors}>
+            Crear falta
+          </Button>
         )}
       </form>
     </Form>

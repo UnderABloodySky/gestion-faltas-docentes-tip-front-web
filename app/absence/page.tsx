@@ -15,6 +15,7 @@ export interface Absence {
   article: string;
   beginDate: Date;
   endDate: Date;
+  teacher?: any;
 }
 
 export type AbsenseResponse = Omit<Absence, 'beginDate' | 'endDate'> & {
