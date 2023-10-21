@@ -136,6 +136,9 @@ tmp
 .yarn/install-state.gz
 .pnp.*
 
+# nx
+.nx/cache
+
 # IDE - VSCode
 .vscode
 !.vscode/settings.json
